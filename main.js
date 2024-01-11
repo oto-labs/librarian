@@ -1,6 +1,6 @@
 
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0';
-import { LocalIndex } from 'https://cdn.jsdelivr.net/npm/vectra@0.5.5/';
+// import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0';
+// import { LocalIndex } from 'https://cdn.jsdelivr.net/npm/vectra@0.5.5/';
 // const { LocalIndex } = require('vectra');
 // const { pipeline, env } = require('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0');
 
@@ -167,7 +167,7 @@ function indexNode(bookmarkNode, query) {
 }
   
   document.addEventListener('DOMContentLoaded', function () {
-    initIndex();
-    traverseBookmarks();
+    // initIndex();
+    // traverseBookmarks();
     dumpBookmarks();
   });
