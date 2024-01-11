@@ -1,17 +1,18 @@
-import { insert, remove, search, searchVector } from '@orama/orama'
+import { insert, insertMultiple, remove, search, searchVector } from '@orama/orama'
 
 const indexBookmarks = (dbInstance) => {
 	if (dbInstance) {
 		chrome.bookmarks.getTree(async (tree) => {
 			const bookmarksList = dumpTreeNodes(tree[0].children);
-			console.log(bookmarksList);
-			bookmarksList.forEach(async (data) => {
-				await insert(dbInstance, {
-					title: data.title,
-					url: data.url,
-					// embedding: getVector(data.content)
+			let dataToInsert = [];
+			for (let i = 0; i < bookmarksList.length; i++) {
+				dataToInsert.push({
+					title: bookmarksList[i].title,
+					id: bookmarksList[i].url
+					// embedding: getVector(bookmarksList[i].url)
 				})
-			});
+			}
+			await insertMultiple(dbInstance, dataToInsert, 750);
 
 			console.log(await search(dbInstance, {
 				term: 'Neural'

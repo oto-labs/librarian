@@ -20,14 +20,17 @@ class PipelineSingleton {
 }
 
 class LocalDBSingleton {
+	static dbName = 'librarian-vector-db'
 	static dbInstance = null;
+
 	static async getInstance() {
 		if (this.dbInstance == null) {
 			this.dbInstance = await create({
+				id: this.dbName,
 				schema: {
-				  title: 'string',
-				  url: 'string',
-				//   embedding: 'vector[384]',
+					title: 'string',
+				  	id: 'string',
+				  	// embedding: 'vector[384]',
 				},
 			})
 		}
