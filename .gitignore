@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+.serverless
+node_modules
+*__pycache__
+.serverless-wsgi
+serverless_wsgi.py
+wsgi_handler.py
+*.sqlite
+misc

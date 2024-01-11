@@ -1,0 +1,25 @@
+<html>
+	<head>
+		<script type="module">
+			import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0';
+
+			env.localModelPath = 'models';
+			env.allowRemoteModels = true;
+
+			const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+			const button = document.getElementById('hitme');
+
+			button.addEventListener('click', async () => {
+				const output = await extractor('This is a simple test.', {
+					pooling: 'mean', 
+					normalize: true
+				});
+				const embedding = output.data;
+				console.log(embedding)
+			});
+		</script>
+	</head>
+	<body>
+		<button id='hitme'>Hit Me</button>
+	</body>
+</html>
