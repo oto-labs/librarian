@@ -1,0 +1,23 @@
+{
+  "name": "Librarian",
+  "version": "0.0.1",
+  "description": "Better Bookmark Search",
+  "scripts": {
+    "build": "webpack",
+    "dev": "webpack --watch"
+  },
+  "type": "module",
+  "author": "Xenova",
+  "license": "MIT",
+  "devDependencies": {
+    "copy-webpack-plugin": "^11.0.0",
+    "html-webpack-plugin": "^5.5.1",
+    "path-browserify": "^1.0.1",
+    "webpack": "^5.79.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@orama/orama": "^2.0.0-beta.12",
+    "@xenova/transformers": "^2.0.0"
+  }
+}
