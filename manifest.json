@@ -11,6 +11,11 @@
   "action": {
     "default_popup": "main.html"
   },
+  "background": {
+    "service_worker": "dist/bundle.js",
+    "type": "module"
+
+  },
   "host_permissions": ["https://developer.chrome.com/*"],
   "permissions": ["tabGroups", "tabs", "storage", "bookmarks"]
 }
