@@ -1,0 +1,51 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body>
+    <template id="li_template">
+      <li>
+        <a>
+          <h3 class="title">Bookmark Manager</h3>
+          <p class="pathname">BK PATH</p>
+        </a>
+      </li>
+    </template>
+
+    <div>Search Bookmarks: <input id="search" /></div>
+    <button>Search</button>
+    <ul></ul>
+
+    <script src="./main.js" type="module"></script>
+  </body>
+</html> -->
+
+<html>
+  <head>
+    <link rel="stylesheet" href="third-party/jquery-ui.css" />
+    <link rel="stylesheet" href="third-party/jquery-ui.structure.css" />
+    <link rel="stylesheet" href="third-party/jquery-ui.theme.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script src="third-party/jquery-1.12.4.js"></script>
+    <script src="third-party/jquery-ui-1.12.1.js"></script>
+  </head>
+  <body>
+    <div>Search Bookmarks: <input id="search" /></div>
+    <div id="query-response" hidden>
+      <span>Query Result</span>
+      <span id="query-response-text">r</span>
+    </div>
+    <div id="search-results">
+        <div id="bookmarks"></div>
+        <div id="editdialog"></div>
+        <div id="deletedialog"></div>
+        <div id="adddialog"></div>
+        <div id="test-frame"></div>
+    </div>  
+    <script src="main.js"></script>
+  </body>
+</html>
