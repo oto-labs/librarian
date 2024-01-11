@@ -4,8 +4,6 @@
 // const { LocalIndex } = require('vectra');
 // const { pipeline, env } = require('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.14.0');
 
-env.localModelPath = 'models';
-env.allowRemoteModels = true;
 
 // Search the bookmarks when entering the search keyword.
 $('#search').change(function () {
@@ -141,30 +139,6 @@ $('#search').change(function () {
     return li;
   }
 
-function traverseBookmarks() {
-  chrome.bookmarks.getTree(function (bookmarkTreeNodes) {
-    indexTreeNodes(bookmarkTreeNodes, '');
-  });
-}
-
-function indexTreeNodes(bookmarkNodes, query) {
-  for (var i = 0; i < bookmarkNodes.length; i++) {
-    var node = bookmarkNodes[i];
-    dumpNode(node, query);
-    if (node.children) {
-      dumpTreeNodes(node.children, query);
-    }
-  }
-}
-
-function indexNode(bookmarkNode, query) {
-  if (bookmarkNode.url) {
-    var title = bookmarkNode.title;
-    getVector(title).then(function (vector) {
-      addIndex(vector);
-    });
-  }
-}
   
   document.addEventListener('DOMContentLoaded', function () {
     // initIndex();

@@ -1,5 +1,3 @@
-const OPENAI_API_KEY = "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";
-
 // Search the bookmarks when entering the search keyword.
 $('#search').change(function () {
     console.log($('#search').val());
