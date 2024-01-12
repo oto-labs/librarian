@@ -1,14 +1,15 @@
 import { indexBookmarks } from "./bookutils.js";
 
 const inputElement = document.getElementById('text');
+const searchButton = document.getElementById('search-button');
 const outputElement = document.getElementById('output');
 
 indexBookmarks();
 
-inputElement.addEventListener('input', (event) => {
+searchButton.addEventListener('click', () => {
 	const message = {
-		action: 'classify',
-		text: event.target.value,
+		action: 'search',
+		query: inputElement.value,
 	}
 
 	chrome.runtime.sendMessage(message, (response) => {

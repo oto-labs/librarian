@@ -1,54 +1,4 @@
-import { pipeline, env } from '@xenova/transformers';
-import { indexBookmarks } from './bookutils.js';
-import { create } from '@orama/orama'
-
-env.allowLocalModels = false;
-env.backends.onnx.wasm.numThreads = 1;
-
-class PipelineSingleton {
-	static task = 'text-classification';
-	static model = 'Xenova/distilbert-base-uncased-finetuned-sst-2-english';
-	static instance = null;
-
-	static async getInstance(progress_callback = null) {
-		if (this.instance === null) {
-			this.instance = pipeline(this.task, this.model, { progress_callback });
-		}
-
-		return this.instance;
-	}
-}
-
-class LocalDBSingleton {
-	static dbName = 'librarian-vector-db'
-	static dbInstance = null;
-
-	static async getInstance() {
-		if (this.dbInstance == null) {
-			this.dbInstance = await create({
-				id: this.dbName,
-				schema: {
-					title: 'string',
-				  	id: 'string',
-				  	// embedding: 'vector[384]',
-				},
-			})
-		}
-
-		return this.dbInstance;
-	}
-}
-
-const classify = async (text) => {
-	let model = await PipelineSingleton.getInstance((data) => {
-		// You can track the progress of the pipeline creation here.
-		// e.g., you can send `data` back to the UI to indicate a progress bar
-		// console.log('progress', data);
-	});
-
-	let result = await model(text);
-	return result;
-};
+import { indexBookmarks, searchBookmarks, LocalDBSingleton } from './bookutils.js';
 
 ////////////////////// 1. Context Menus //////////////////////
 chrome.runtime.onInstalled.addListener(async function () {
@@ -57,7 +7,7 @@ chrome.runtime.onInstalled.addListener(async function () {
 	indexBookmarks(dbInstance);
 
 	chrome.alarms.create('librarian-indexer', {
-		periodInMinutes: 1
+		periodInMinutes: 15
 	});
 });
 
@@ -72,10 +22,11 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
 ////////////////////// 2. Message Events /////////////////////
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	if (message.action !== 'classify') return;
+	if (message.action !== 'search') return;
 
 	(async function () {
-		let result = await classify(message.text);
+		const dbInstance = await LocalDBSingleton.getInstance();
+		let result = await searchBookmarks(dbInstance, message.query);
 		sendResponse(result);
 	})();
 
