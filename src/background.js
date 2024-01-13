@@ -62,6 +62,7 @@ const classify = async (text) => {
 	let result = await model(text);
 	return result;
 };
+import { indexBookmarks, searchBookmarks, LocalDBSingleton } from './bookutils.js';
 
 ////////////////////// 1. Context Menus //////////////////////
 chrome.runtime.onInstalled.addListener(async function () {
@@ -70,7 +71,7 @@ chrome.runtime.onInstalled.addListener(async function () {
 	indexBookmarks(dbInstance);
 
 	chrome.alarms.create('librarian-indexer', {
-		periodInMinutes: 1
+		periodInMinutes: 15
 	});
 });
 
@@ -85,10 +86,11 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
 ////////////////////// 2. Message Events /////////////////////
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	if (message.action !== 'classify') return;
+	if (message.action !== 'search') return;
 
 	(async function () {
-		let result = await classify(message.text);
+		const dbInstance = await LocalDBSingleton.getInstance();
+		let result = await searchBookmarks(dbInstance, message.query);
 		sendResponse(result);
 	})();
 
