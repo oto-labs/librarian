@@ -12,6 +12,7 @@ inputElement.addEventListener('input', (event) => {
 	}
 
 	chrome.runtime.sendMessage(message, (response) => {
+        console.log(event.target.value, "response", response);
 		outputElement.innerText = JSON.stringify(response, null, 2);
 	});
 });

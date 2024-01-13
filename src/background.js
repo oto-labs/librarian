@@ -1,6 +1,7 @@
 import { pipeline, env } from '@xenova/transformers';
 import { indexBookmarks } from './bookutils.js';
 import { create } from '@orama/orama'
+import { restore, persist } from '@orama/plugin-data-persistence'
 
 env.allowLocalModels = false;
 env.backends.onnx.wasm.numThreads = 1;
@@ -37,6 +38,18 @@ class LocalDBSingleton {
 
 		return this.dbInstance;
 	}
+
+    static async saveVector() {
+        if (this.dbInstance) { 
+            await persist(this.dbInstance, 'json');
+        }
+    }
+
+    static async restoreVector() {
+        if (this.dbInstance) {
+            await restore('json', this.dbInstance);
+        }
+    }
 }
 
 const classify = async (text) => {

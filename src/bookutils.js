@@ -1,4 +1,5 @@
 import { insert, insertMultiple, remove, search, searchVector } from '@orama/orama'
+import { restore, persist } from '@orama/plugin-data-persistence'
 
 const indexBookmarks = (dbInstance) => {
 	if (dbInstance) {
