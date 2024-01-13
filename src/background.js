@@ -1,7 +1,7 @@
 import { pipeline, env } from '@xenova/transformers';
-import { indexBookmarks } from './bookutils.js';
-import { create } from '@orama/orama'
-import { restore, persist } from '@orama/plugin-data-persistence'
+import { indexBookmarks, searchBookmarks } from './bookutils.js';
+import { create } from '@orama/orama';
+import { restore, persist } from '@orama/plugin-data-persistence';
 
 env.allowLocalModels = false;
 env.backends.onnx.wasm.numThreads = 1;
@@ -21,8 +21,9 @@ class PipelineSingleton {
 }
 
 class LocalDBSingleton {
-	static dbName = 'librarian-vector-db'
+	static dbName = 'librarian-vector-db';
 	static dbInstance = null;
+    static shouldSave = false;
 
 	static async getInstance() {
 		if (this.dbInstance == null) {
@@ -33,16 +34,22 @@ class LocalDBSingleton {
 				  	id: 'string',
 				  	// embedding: 'vector[384]',
 				},
-			})
+			});
+            await this.restoreVector();
 		}
 
 		return this.dbInstance;
 	}
 
-    static async saveVector() {
-        if (this.dbInstance) { 
+    static async saveVectorIfNeeded() {
+        if (this.dbInstance && this.shouldSave) { 
             await persist(this.dbInstance, 'json');
+            this.shouldSave = false;
         }
+    }
+
+    static markForSave() {
+        this.shouldSave = true;
     }
 
     static async restoreVector() {
@@ -54,15 +61,12 @@ class LocalDBSingleton {
 
 const classify = async (text) => {
 	let model = await PipelineSingleton.getInstance((data) => {
-		// You can track the progress of the pipeline creation here.
-		// e.g., you can send `data` back to the UI to indicate a progress bar
-		// console.log('progress', data);
+		// Progress callback logic
 	});
 
 	let result = await model(text);
 	return result;
 };
-import { indexBookmarks, searchBookmarks, LocalDBSingleton } from './bookutils.js';
 
 ////////////////////// 1. Context Menus //////////////////////
 chrome.runtime.onInstalled.addListener(async function () {
@@ -80,8 +84,14 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 	if (alarm.name == 'librarian-indexer') {
 		const dbInstance = await LocalDBSingleton.getInstance();
 		indexBookmarks(dbInstance);
+        LocalDBSingleton.markForSave();
 	}
 });
+
+// Regularly save the state of the database
+setInterval(async () => {
+	await LocalDBSingleton.saveVectorIfNeeded();
+}, 60000); // Save every 60 seconds, adjust as needed
 //////////////////////////////////////////////////////////////
 
 ////////////////////// 2. Message Events /////////////////////
@@ -97,4 +107,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 	return true;
 });
 //////////////////////////////////////////////////////////////
-
