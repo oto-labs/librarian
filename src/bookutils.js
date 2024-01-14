@@ -1,14 +1,15 @@
-import { create, insertMultiple, search, searchVector } from '@orama/orama'
+import { create, count, insertMultiple, searchVector } from '@orama/orama'
 import { embed } from './llm.js';
 
 class LocalDBSingleton {
-	static dbName = 'librarian-vector-db'
+	static dbNamePrefix = 'librarian-vector-db-'
 	static dbInstance = null;
 
 	static async getInstance() {
+		const profile = await chrome.identity.getProfileUserInfo();
 		if (this.dbInstance == null) {
 			this.dbInstance = await create({
-				id: this.dbName,
+				id: this.dbName + profile.id,
 				schema: {
 					title: 'string',
 					url: 'string',
@@ -21,22 +22,31 @@ class LocalDBSingleton {
 	}
 }
 
+const getDBCount = async (dbInstance) => {
+	return await count(dbInstance);
+};
+
 const indexBookmarks = (dbInstance) => {
 	if (!dbInstance) return;
 
 	chrome.bookmarks.getTree(async (tree) => {
 		const bookmarksList = dumpTreeNodes(tree[0].children);
 		let dataToInsert = [];
+		let c = 0;
 
 		for (let i = 0; i < bookmarksList.length; i++) {
+			const key = bookmarksList[i].url;
 			const vector = await embed(bookmarksList[i].title);
 			dataToInsert.push({
 				title: bookmarksList[i].title,
-				url: bookmarksList[i].url,
+				url: key,
 				embedding: vector
 			});
-			// chrome.storage.local.get([key]).then((result) => {
+			c++;
+			// chrome.storage.local.get(key).then(async (result) => {
 			// 	if (!result.key) {
+			// 		c = c + 1;
+			// 		const vector = await embed(bookmarksList[i].title);
 			// 		dataToInsert.push({
 			// 			title: bookmarksList[i].title,
 			// 			id: key,
@@ -48,7 +58,7 @@ const indexBookmarks = (dbInstance) => {
 		}
 
 		await insertMultiple(dbInstance, dataToInsert, 750);
-		console.log("Finished indexing")
+		console.log("Finished indexing: " + c);
     });
 }
 
@@ -85,4 +95,4 @@ const searchBookmarks = async (dbInstance, query) => {
 	return result.hits;
 };
 
-export { indexBookmarks, searchBookmarks, LocalDBSingleton };
+export { getDBCount, indexBookmarks, searchBookmarks, LocalDBSingleton };

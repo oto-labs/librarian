@@ -9,7 +9,9 @@
 	"bookmarks",
     "scripting",
     "storage",
-    "unlimitedStorage"
+    "unlimitedStorage",
+	"identity",
+	"identity.email"
   ],
   "background": {
     "service_worker": "background.js",

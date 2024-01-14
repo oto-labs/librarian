@@ -20,10 +20,6 @@ h2 {
     margin-bottom: 16px;
 }
 
-.container {
-    width: 360px;
-}
-
 html,
 body {
     min-width: 400px;
@@ -33,18 +29,46 @@ body {
 body {
     display: flex;
     justify-content: center;
-    align-items: center;
+}
+
+.container {
+    width: 360px;
+	margin-top: 50px;
 }
 
 #text {
     width: 100%;
     padding: 8px;
     font-size: 20px;
+	margin-top: 5px;
     margin-bottom: 8px;
 }
 
+#search-button {
+	width: 100%;
+	padding: 5px 0px;
+	border: 1px #ccc;
+	border-radius: 5px;
+};
+
 #output {
+	margin-top: 10px;
+	height: max-content;
     font-size: 20px;
     font-family: 'Roboto Mono', monospace;
-    height: 100px;
+}
+
+#loader {
+	border: 16px solid #f3f3f3; /* Light grey */
+	border-top: 16px solid #3498db; /* Blue */
+	border-radius: 50%;
+	width: 50px;
+	height: 50px;
+	margin-top: 10px;
+	animation: spin 2s linear infinite;
+  }
+  
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
 }
