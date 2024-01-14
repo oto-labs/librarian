@@ -27,39 +27,39 @@ const getDBCount = async (dbInstance) => {
 };
 
 const indexBookmarks = (dbInstance) => {
-	if (!dbInstance) return;
+	if (dbInstance) {
+		chrome.bookmarks.getTree(async (tree) => {
+			const bookmarksList = dumpTreeNodes(tree[0].children);
+			let dataToInsert = [];
+			let c = 0;
 
-	chrome.bookmarks.getTree(async (tree) => {
-		const bookmarksList = dumpTreeNodes(tree[0].children);
-		let dataToInsert = [];
-		let c = 0;
+			for (let i = 0; i < bookmarksList.length; i++) {
+				const key = bookmarksList[i].url;
+				const vector = await embed(bookmarksList[i].title);
+				dataToInsert.push({
+					title: bookmarksList[i].title,
+					url: key,
+					embedding: vector
+				});
+				c++;
+				// chrome.storage.local.get(key).then(async (result) => {
+				// 	if (!result.key) {
+				// 		c = c + 1;
+				// 		const vector = await embed(bookmarksList[i].title);
+				// 		dataToInsert.push({
+				// 			title: bookmarksList[i].title,
+				// 			id: key,
+				// 			embedding: embed(bookmarksList[i].title)
+				// 		});
+				// 		chrome.storage.local.set({ key: key });
+				// 	}
+				// });
+			}
 
-		for (let i = 0; i < bookmarksList.length; i++) {
-			const key = bookmarksList[i].url;
-			const vector = await embed(bookmarksList[i].title);
-			dataToInsert.push({
-				title: bookmarksList[i].title,
-				url: key,
-				embedding: vector
-			});
-			c++;
-			// chrome.storage.local.get(key).then(async (result) => {
-			// 	if (!result.key) {
-			// 		c = c + 1;
-			// 		const vector = await embed(bookmarksList[i].title);
-			// 		dataToInsert.push({
-			// 			title: bookmarksList[i].title,
-			// 			id: key,
-			// 			embedding: embed(bookmarksList[i].title)
-			// 		});
-			// 		chrome.storage.local.set({ key: key });
-			// 	}
-			// });
-		}
-
-		await insertMultiple(dbInstance, dataToInsert, 750);
-		console.log("Finished indexing: " + c);
-    });
+			await insertMultiple(dbInstance, dataToInsert, 750);
+			console.log("Finished indexing: " + c);
+		});
+	}
 }
 
 const dumpTreeNodes = (nodes) => {
