@@ -17,19 +17,13 @@ class PipelineSingleton {
 	}
 }
 
-const embed = async (text) => {
-	let model = await PipelineSingleton.getInstance((data) => {
-		// You can track the progress of the pipeline creation here.
-		// e.g., you can send `data` back to the UI to indicate a progress bar
-		// console.log('progress', data);
-	});
-
-	const output = await model(text, {
-        pooling: 'mean', 
+const embed = async (pipelineInstance, text) => {
+	const output = await pipelineInstance(text, {
+        pooling: 'mean',
         normalize: true
     });
 
 	return Array.from(output.data);
 };
 
-export { embed };
+export { embed, PipelineSingleton };

@@ -1,9 +1,11 @@
-import { create, count, insertMultiple, searchVector } from '@orama/orama'
-import { embed } from './llm.js';
+import { create, count, insertMultiple, searchVector } from '@orama/orama';
+import { restore, persist } from '@orama/plugin-data-persistence';
+import { PipelineSingleton, embed } from './llm.js';
 
 class LocalDBSingleton {
 	static dbNamePrefix = 'librarian-vector-db-'
 	static dbInstance = null;
+	static shouldSave = false;
 
 	static async getInstance() {
 		const profile = await chrome.identity.getProfileUserInfo();
@@ -15,11 +17,32 @@ class LocalDBSingleton {
 					url: 'string',
 				  	embedding: 'vector[384]',
 				},
-			})
+			});
+			// await this.restoreVector();
 		}
 
 		return this.dbInstance;
 	}
+
+	static async saveVectorIfNeeded() {
+        if (this.dbInstance && this.shouldSave) { 
+			console.log('Saving DB Instance');
+            // await persist(this.dbInstance, 'json');
+            this.shouldSave = false;
+        }
+    }
+
+	static markForSave() {
+		console.log('Marking DB Instance for save');
+        this.shouldSave = true;
+    }
+
+	static async restoreVector() {
+        if (this.dbInstance) {
+			console.log('Restoring DB Instance');
+            // await restore('json', this.dbInstance);
+        }
+    }
 }
 
 const getDBCount = async (dbInstance) => {
@@ -30,12 +53,14 @@ const indexBookmarks = (dbInstance) => {
 	if (dbInstance) {
 		chrome.bookmarks.getTree(async (tree) => {
 			const bookmarksList = dumpTreeNodes(tree[0].children);
+			const pipelineInstance = await PipelineSingleton.getInstance();
+
 			let dataToInsert = [];
 			let c = 0;
 
 			for (let i = 0; i < bookmarksList.length; i++) {
 				const key = bookmarksList[i].url;
-				const vector = await embed(bookmarksList[i].title);
+				const vector = await embed(pipelineInstance, bookmarksList[i].title);
 				dataToInsert.push({
 					title: bookmarksList[i].title,
 					url: key,
@@ -82,7 +107,8 @@ const dumpTreeNodes = (nodes) => {
 const searchBookmarks = async (dbInstance, query) => {
 	if (!dbInstance) return [];
 
-	const queryEmbed = await embed(query);
+	const pipelineInstance = await PipelineSingleton.getInstance();
+	const queryEmbed = await embed(pipelineInstance, query);
 	const result = await searchVector(dbInstance, {
 		vector: queryEmbed,
 		property: 'embedding',

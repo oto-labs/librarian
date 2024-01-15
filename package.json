@@ -18,6 +18,9 @@
   },
   "dependencies": {
     "@orama/orama": "^2.0.0-beta.12",
-    "@xenova/transformers": "^2.0.0"
+    "@orama/plugin-data-persistence": "^2.0.0-beta.12",
+    "@xenova/transformers": "^2.0.0",
+	"stream-browserify": "^3.0.0",
+	"stream": "^0.0.2"
   }
 }
