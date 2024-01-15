@@ -10,6 +10,7 @@ class PipelineSingleton {
 
 	static async getInstance(progress_callback = null) {
 		if (this.instance === null) {
+			console.log('Setting up Pipeline...');
 			this.instance = pipeline(this.task, this.model, { progress_callback });
 		}
 
