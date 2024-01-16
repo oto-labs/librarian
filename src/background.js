@@ -1,11 +1,8 @@
-import { getDBCount, indexBookmarks, searchBookmarks, LocalDBSingleton, makeIndexedDB } from './bookutils.js';
+import { getDBCount, indexBookmarks, searchBookmarks, LocalDBSingleton } from './bookutils.js';
 
 ////////////////////// 1. Context Menus //////////////////////
 chrome.runtime.onInstalled.addListener(async function () {
-	console.log('Setting up DBs...');
-
 	const dbInstance = await LocalDBSingleton.getInstance();
-	makeIndexedDB(LocalDBSingleton.dbName);
 	indexBookmarks(dbInstance);
 
 	chrome.alarms.create('librarian-indexer', {
@@ -18,7 +15,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 	if (alarm.name == 'librarian-indexer') {
 		const dbInstance = await LocalDBSingleton.getInstance();
 		indexBookmarks(dbInstance);
-        LocalDBSingleton.markForSave();
 	}
 });
 

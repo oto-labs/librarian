@@ -1,23 +1,21 @@
-import { create, count, insertMultiple, searchVector, getByID } from '@orama/orama';
-import { restore, persist } from '@orama/plugin-data-persistence';
-import { PipelineSingleton, embed } from './llm.js';
 import * as cheerio from 'cheerio';
+import { create, count, insertMultiple, searchVector, getByID, save, load } from '@orama/orama';
+import { PipelineSingleton, embed } from './llm.js';
 
 class LocalDBSingleton {
 	static dbNamePrefix = 'librarian-vector-db-'
 	static dbInstance = null;
-	static shouldSave = false;
 	static profileId = '';
 	static dbName = '';
 
 	static async getInstance() {
-		const profile = await chrome.identity.getProfileUserInfo();
-		this.dbName = this.dbNamePrefix + profile.id;
-
 		if (this.dbInstance == null) {
+			const profile = await chrome.identity.getProfileUserInfo();
+			this.dbName = this.dbNamePrefix + profile.id;
+
 			console.log('Creating DB: ' + this.dbName);
 			this.dbInstance = await create({
-				// id: this.dbName,
+				id: this.dbName,
 				schema: {
 					id: 'string',
 					title: 'string',
@@ -25,44 +23,41 @@ class LocalDBSingleton {
 				  	embedding: 'vector[384]',
 				},
 			});
-			// await this.restoreVector();
+			await this.restoreVector();
 		}
 
 		return this.dbInstance;
 	}
 
 	static async saveVectorIfNeeded() {
-        if (this.dbInstance && this.shouldSave) { 
+        if (this.dbInstance) { 
 			console.log('Saving DB Instance');
-            // await persist(this.dbInstance, 'json');
-            this.shouldSave = false;
+            const dbExport = await save(this.dbInstance);
+			if (dbExport) {
+				let serialized = {};
+				serialized[this.dbName] = JSON.stringify(dbExport);
+				chrome.storage.local.set(serialized).then(() => {
+					console.log('Saved OK');
+				});
+			}
         }
-    }
-
-	static markForSave() {
-		console.log('Marking DB Instance for save');
-        this.shouldSave = true;
     }
 
 	static async restoreVector() {
         if (this.dbInstance) {
 			console.log('Restoring DB Instance');
-            // await restore('json', this.dbInstance);
+            chrome.storage.local.get(this.dbName).then((result) => {
+				if (result) {
+					console.log(result);
+					load(this.dbInstance, JSON.parse(result[this.dbName]));
+				}
+			});
         }
     }
 }
 
 const getDBCount = async (dbInstance) => {
 	return await count(dbInstance);
-};
-
-const makeIndexedDB = async (dbName) => {
-	// const request = indexedDB.open("librarian-db", 2);
-	// request.onupgradeneeded = (event) => {
-	// 	const db = event.target.result;
-	// 	db.createObjectStore(dbName, { keyPath: "url" });
-	// 	console.log('Updated IndexedDB');
-	// };
 };
 
 const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark, dataToInsert, semaphore) => {
@@ -105,6 +100,7 @@ const indexBookmarks = (dbInstance) => {
 			let dataToInsert = {};
 			let semaphore = {'count': bookmarksList.length}
 
+			console.log('Started indexing: ' + Date.now());
 			for (let i = 0; i < bookmarksList.length; i++) {
 				// scrapeAndVectorize(dbInstance, pipelineInstance, bookmarksList[i], dataToInsert, semaphore);
 				const bookmark = bookmarksList[i];
@@ -115,13 +111,13 @@ const indexBookmarks = (dbInstance) => {
 				if (!result) {
 					let text = bookmark.title;
 
-					try {
-						const res = await fetch(url);
-						const dom = cheerio.load(await res.text());
-						text = dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 50);
-					} catch (error) {
-						// console.log(error);
-					}
+					// try {
+					// 	const res = await fetch(url);
+					// 	const dom = cheerio.load(await res.text());
+					// 	text = dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 50);
+					// } catch (error) {
+					// 	// console.log(error);
+					// }
 
 					const vector = await embed(pipelineInstance, text);
 					dataToInsert[url] = {	
@@ -138,7 +134,8 @@ const indexBookmarks = (dbInstance) => {
 			// }
 
 			await insertMultiple(dbInstance, Object.values(dataToInsert), 750);
-			console.log("Finished indexing");
+			LocalDBSingleton.saveVectorIfNeeded();
+			console.log("Finished indexing: " + Date.now());
 		});
 	}
 }
@@ -177,4 +174,4 @@ const searchBookmarks = async (dbInstance, query) => {
 	return result.hits;
 };
 
-export { getDBCount, makeIndexedDB, indexBookmarks, searchBookmarks, LocalDBSingleton };
+export { getDBCount, indexBookmarks, searchBookmarks, LocalDBSingleton };
