@@ -1,9 +1,16 @@
-import { indexBookmarks } from "./bookutils.js";
-
 const inputElement = document.getElementById('text');
 const searchButton = document.getElementById('search-button');
 const outputElement = document.getElementById('output');
 const loader = document.getElementById('loader');
+
+const makeBookmarkItem = (bookDoc) => {
+	const a = document.createElement('a');
+	a.href = bookDoc.url;
+	a.appendChild(document.createTextNode(bookDoc.title));
+	const d = document.createElement('div');
+	d.appendChild(a);
+	return d;
+};
 
 searchButton.addEventListener('click', () => {
 	const query = inputElement.value;
@@ -11,23 +18,16 @@ searchButton.addEventListener('click', () => {
 		return;
 
 	loader.style.display = 'block';
+	outputElement.innerText = '';
 
 	const message = {
 		action: 'search',
 		query: query,
 	}
-
 	chrome.runtime.sendMessage(message, (response) => {
 		loader.style.display = 'none';
-		outputElement.innerText = '';
 		response.result.forEach(element => {
-			const a = document.createElement('a');
-			a.href = element.document.url;
-			a.appendChild(document.createTextNode(element.document.title));
-			const d = document.createElement('div');
-			d.appendChild(a);
-			outputElement.appendChild(d);
+			outputElement.appendChild(makeBookmarkItem(element.document));
 		});
-		// outputElement.innerText = JSON.stringify(response, null, 2);
 	});
 });
