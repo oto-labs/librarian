@@ -12,7 +12,6 @@
   "devDependencies": {
     "copy-webpack-plugin": "^11.0.0",
     "html-webpack-plugin": "^5.5.1",
-    "path-browserify": "^1.0.1",
     "webpack": "^5.79.0",
     "webpack-cli": "^5.1.4"
   },
@@ -20,7 +19,10 @@
     "@orama/orama": "^2.0.0-beta.12",
     "@orama/plugin-data-persistence": "^2.0.0-beta.12",
     "@xenova/transformers": "^2.0.0",
-	"stream-browserify": "^3.0.0",
-	"stream": "^0.0.2"
+    "cheerio": "^1.0.0-rc.12",
+    "path-browserify": "^1.0.1",
+    "stream": "^0.0.2",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5"
   }
 }

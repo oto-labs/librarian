@@ -54,8 +54,16 @@ body {
 #output {
 	margin-top: 10px;
 	height: max-content;
-    font-size: 20px;
+	display: flex;
+	flex-direction: column;
+	overflow: scroll;
+}
+
+#output div {
+	padding: 5px 10px;
+	font-size: 16px;
     font-family: 'Roboto Mono', monospace;
+	border-bottom: 1px #ccc dotted;
 }
 
 #loader {

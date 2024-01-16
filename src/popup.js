@@ -19,6 +19,15 @@ searchButton.addEventListener('click', () => {
 
 	chrome.runtime.sendMessage(message, (response) => {
 		loader.style.display = 'none';
-		outputElement.innerText = JSON.stringify(response, null, 2);
+		outputElement.innerText = '';
+		response.result.forEach(element => {
+			const a = document.createElement('a');
+			a.href = element.document.url;
+			a.appendChild(document.createTextNode(element.document.title));
+			const d = document.createElement('div');
+			d.appendChild(a);
+			outputElement.appendChild(d);
+		});
+		// outputElement.innerText = JSON.stringify(response, null, 2);
 	});
 });

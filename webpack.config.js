@@ -19,6 +19,11 @@ const config = {
         path: path.resolve(__dirname, 'build'),
         filename: '[name].js',
     },
+	resolve: {
+		fallback: {
+		  fs: false
+		}
+	},
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/popup.html',
