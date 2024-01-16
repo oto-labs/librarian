@@ -18,9 +18,7 @@ class LocalDBSingleton {
 				id: this.dbName,
 				schema: {
 					id: 'string',
-					title: 'string',
-					url: 'string',
-				  	embedding: 'vector[384]',
+					embedding: 'vector[384]',
 				},
 			});
 			await this.restoreVector();
@@ -47,7 +45,7 @@ class LocalDBSingleton {
         if (this.dbInstance) {
 			console.log('Restoring DB Instance');
             chrome.storage.local.get(this.dbName).then((result) => {
-				if (result) {
+				if (result && Object.keys(result).includes(this.dbName)) {
 					console.log(result);
 					load(this.dbInstance, JSON.parse(result[this.dbName]));
 				}
