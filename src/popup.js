@@ -26,7 +26,7 @@ searchButton.addEventListener('click', () => {
 	}
 	chrome.runtime.sendMessage(message, (response) => {
 		loader.style.display = 'none';
-		response.result.forEach(element => {
+		response.result.forEach((element) => {
 			outputElement.appendChild(makeBookmarkItem(element.document));
 		});
 	});
