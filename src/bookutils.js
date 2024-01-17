@@ -51,6 +51,16 @@ const getDBCount = async (dbInstance) => {
 
 const indexBookmarks = (dbInstance) => {
 	if (dbInstance) {
+
+		// set localStorage to indicate that indexing has started
+		// localStorage.setItem('indexingStarted', true);
+		chrome.storage.local.set({indexingStarted: true}, function() {
+			if(chrome.runtime.lastError) {
+			  console.error("error setting indexingStarted to true: " + chrome.runtime.lastError.message);
+			}
+		  });
+
+		
 		chrome.bookmarks.getTree(async (tree) => {
 			const bookmarksList = dumpTreeNodes(tree[0].children);
 			const pipelineInstance = await PipelineSingleton.getInstance();
@@ -83,6 +93,12 @@ const indexBookmarks = (dbInstance) => {
 
 			await insertMultiple(dbInstance, dataToInsert, 750);
 			console.log("Finished indexing: " + c);
+			// localStorage.setItem('indexingStarted', false);
+			chrome.storage.local.set({indexingStarted: false}, function() {
+				if(chrome.runtime.lastError) {
+				  console.error("error setting indexingStarted to false: " + chrome.runtime.lastError.message);
+				}
+			  });
 		});
 	}
 }
