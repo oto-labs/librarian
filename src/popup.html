@@ -5,12 +5,16 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Librarian</title>
-		<link rel="stylesheet" href="popup.css" />
+		<link rel="stylesheet" href="./popup.css" />
 	</head>
 	<body>
 		<div class="container">
 			<h1>Librarian</h1>
 			<h2>Search Bookmarks</h2>
+			<div style='display: none;' id="index-loader">
+				<div class="loader"></div>
+				<div style="overflow: hidden;">Indexing...</div>
+			</div>
 			<input id="text" placeholder="Enter text here">
 			<br />
 			<button id="search-button">Search</button>

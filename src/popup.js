@@ -2,6 +2,7 @@ const inputElement = document.getElementById('text');
 const searchButton = document.getElementById('search-button');
 const outputElement = document.getElementById('output');
 const loader = document.getElementById('loader');
+const indexLoader = document.getElementById('index-loader');
 
 const makeBookmarkItem = (bookDoc) => {
 	const a = document.createElement('a');
@@ -31,3 +32,17 @@ searchButton.addEventListener('click', () => {
 		});
 	});
 });
+
+async function checkIndexingStatus() {
+	const storageVar = await chrome.storage.sync.get(['indexingStarted']);
+	
+	if (storageVar['indexingStarted']) {
+		indexLoader.style.display = 'flex';
+	} else {
+		indexLoader.style.display = 'none';
+	}
+}
+
+window.onload=function(){
+	setInterval(checkIndexingStatus, 1000);
+}
