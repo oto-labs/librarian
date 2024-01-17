@@ -99,11 +99,15 @@ const indexBookmarks = (dbInstance) => {
 			let dataToInsert = {};
 			let semaphore = {'count': bookmarksList.length}
 
-			chrome.storage.sync.set({ 'indexingStarted': true });
+			chrome.storage.sync.set({ 'indexingStarted': true, 'bookmarksLength': bookmarksList.length});
 
 			console.log('Started indexing: ' + Date.now());
 
 			for (let i = 0; i < bookmarksList.length; i++) {
+				// setTimeout(1000);
+				// await new Promise(r => setTimeout(r, 1000));
+				// console.log(i);
+				chrome.storage.sync.set({ 'bookmarksIndexProgress': i+1 });
 				// scrapeAndVectorize(dbInstance, pipelineInstance, bookmarksList[i], dataToInsert, semaphore);
 				const bookmark = bookmarksList[i];
 
