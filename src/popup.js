@@ -28,9 +28,13 @@ searchButton.addEventListener('click', () => {
 	}
 	chrome.runtime.sendMessage(message, (response) => {
 		loader.style.display = 'none';
-		response.result.forEach(element => {
-			outputElement.appendChild(makeBookmarkItem(element.document));
-		});
+		if (response.result.length > 0) {
+			response.result.forEach((element) => {
+				outputElement.appendChild(makeBookmarkItem(element.document));
+			});
+		} else {
+			outputElement.innerText = 'No results found';
+		}
 	});
 });
 

@@ -46,7 +46,6 @@ class LocalDBSingleton {
 			console.log('Restoring DB Instance');
             chrome.storage.local.get(this.dbName).then((result) => {
 				if (result && Object.keys(result).includes(this.dbName)) {
-					console.log(result);
 					load(this.dbInstance, JSON.parse(result[this.dbName]));
 				}
 			});
@@ -58,46 +57,44 @@ const getDBCount = async (dbInstance) => {
 	return await count(dbInstance);
 };
 
-const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark, dataToInsert, semaphore) => {
-	const url = bookmark.url;
-	const result = await getByID(dbInstance, url);
+const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark) => {
+	return new Promise(resolve => {
+		const url = bookmark.url;
+		getByID(dbInstance, url).then((result) => {
+			if (result) {
+				resolve({});
+				return;
+			}
 
-	if (!result) {
-		let text = bookmark.title;
+			const text = fetch(url).then(res => res.text()).then(res => {
+				const dom = cheerio.load(res);
+				return dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 100);
+			}).catch(error => bookmark.title);
 
-		// try {
-		// 	const res = await fetch(url);
-		// 	const dom = cheerio.load(await res.text());
-		// 	text = dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 50);
-		// } catch (error) {
-		// 	// console.log(error);
-		// }
-
-		// if (i % 100 == 1) {
-		// 	console.log(i + ' : '  + (sum / i) + 'ms');
-		// }
-
-		const vector = await embed(pipelineInstance, text);
-		dataToInsert[url] = {	
-			id: url,
-			title: bookmark.title,
-			url: url,
-			embedding: vector
-		};
-	}
-
-	--semaphore.count;
+			text.then((res) => {
+				res = res ? res : bookmark.title;
+				embed(pipelineInstance, res).then(vector => {
+					resolve({
+						id: url,
+						title: bookmark.title,
+						url: url,
+						embedding: vector
+					});
+				}).catch(error => resolve({}));
+			}).catch(error => resolve({}));
+		}).catch(error => {
+			resolve({});
+		});
+	});
 };
 
 const indexBookmarks = (dbInstance) => {
 	if (dbInstance) {
 		console.log('Indexing bookmarks')
 		chrome.bookmarks.getTree(async (tree) => {
-			const bookmarksList = dumpTreeNodes(tree[0].children);
+			const bookmarksList = dumpTreeNodes(tree[0].children).slice(0, 200);
 			const pipelineInstance = await PipelineSingleton.getInstance();
-
 			let dataToInsert = {};
-			let semaphore = {'count': bookmarksList.length}
 
 			chrome.storage.sync.set({ 'indexingStarted': true, 'bookmarksLength': bookmarksList.length});
 
@@ -138,13 +135,20 @@ const indexBookmarks = (dbInstance) => {
 			// while(semaphore.count > 0) {
 				// setTimeout(() => {console.log(semaphore)}, 1000);
 			// }
+			const embeddedDate = await Promise.all(bookmarksList.map((bookmark) => {
+				return scrapeAndVectorize(dbInstance, pipelineInstance, bookmark);
+			}));
+			console.log(embeddedDate);
+			embeddedDate.forEach((result) => {
+				if (result)
+					dataToInsert[result.url] = result;
+			});
 
 			await insertMultiple(dbInstance, Object.values(dataToInsert), 750);
 			LocalDBSingleton.saveVectorIfNeeded();
 			console.log("Finished indexing: " + Date.now());
 
 			chrome.storage.sync.set({ 'indexingStarted': false });
-
 		});
 	}
 }
@@ -174,11 +178,12 @@ const searchBookmarks = async (dbInstance, query) => {
 	const result = await searchVector(dbInstance, {
 		vector: queryEmbed,
 		property: 'embedding',
-		similarity: 0.01,
+		similarity: 0.25,
 		includeVectors: false,
-		limit: 10,
+		limit: 20,
 		offset: 0,
 	})
+	console.log(result);
 
 	return result.hits;
 };
