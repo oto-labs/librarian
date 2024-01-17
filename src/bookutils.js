@@ -96,9 +96,45 @@ const indexBookmarks = (dbInstance) => {
 			const pipelineInstance = await PipelineSingleton.getInstance();
 			let dataToInsert = {};
 
-			chrome.storage.sync.set({ 'indexingStarted': true });
+			chrome.storage.sync.set({ 'indexingStarted': true, 'bookmarksLength': bookmarksList.length});
 
 			console.log('Started indexing: ' + Date.now());
+
+			for (let i = 0; i < bookmarksList.length; i++) {
+				// setTimeout(1000);
+				// await new Promise(r => setTimeout(r, 1000));
+				// console.log(i);
+				chrome.storage.sync.set({ 'bookmarksIndexProgress': i+1 });
+				// scrapeAndVectorize(dbInstance, pipelineInstance, bookmarksList[i], dataToInsert, semaphore);
+				const bookmark = bookmarksList[i];
+
+				const url = bookmark.url;
+				const result = await getByID(dbInstance, url);
+
+				if (!result) {
+					let text = bookmark.title;
+
+					// try {
+					// 	const res = await fetch(url);
+					// 	const dom = cheerio.load(await res.text());
+					// 	text = dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 50);
+					// } catch (error) {
+					// 	// console.log(error);
+					// }
+
+					const vector = await embed(pipelineInstance, text);
+					dataToInsert[url] = {	
+						id: url,
+						title: bookmark.title,
+						url: url,
+						embedding: vector
+					};
+				}
+			}
+			// setTimeout(() => {console.log(dataToInsert)}, 1000);
+			// while(semaphore.count > 0) {
+				// setTimeout(() => {console.log(semaphore)}, 1000);
+			// }
 			const embeddedDate = await Promise.all(bookmarksList.map((bookmark) => {
 				return scrapeAndVectorize(dbInstance, pipelineInstance, bookmark);
 			}));
