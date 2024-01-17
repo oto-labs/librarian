@@ -89,10 +89,13 @@ const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark) => {
 
 const indexBookmarks = (dbInstance) => {
 	if (dbInstance) {
+		console.log('Indexing bookmarks')
 		chrome.bookmarks.getTree(async (tree) => {
 			const bookmarksList = dumpTreeNodes(tree[0].children).slice(0, 5);
 			const pipelineInstance = await PipelineSingleton.getInstance();
 			let dataToInsert = {};
+
+			chrome.storage.sync.set({ 'indexingStarted': true });
 
 			console.log('Started indexing: ' + Date.now());
 			const embeddedDate = await Promise.all(bookmarksList.map((bookmark) => {
@@ -107,6 +110,9 @@ const indexBookmarks = (dbInstance) => {
 			await insertMultiple(dbInstance, Object.values(dataToInsert), 750);
 			LocalDBSingleton.saveVectorIfNeeded();
 			console.log("Finished indexing: " + Date.now());
+
+			chrome.storage.sync.set({ 'indexingStarted': false });
+
 		});
 	}
 }
