@@ -1,46 +1,55 @@
-import { create, count, insertMultiple, searchVector } from '@orama/orama';
-import { restore, persist } from '@orama/plugin-data-persistence';
+import * as cheerio from 'cheerio';
+import { create, count, insertMultiple, searchVector, getByID, save, load } from '@orama/orama';
 import { PipelineSingleton, embed } from './llm.js';
 
 class LocalDBSingleton {
 	static dbNamePrefix = 'librarian-vector-db-'
 	static dbInstance = null;
-	static shouldSave = false;
+	static profileId = '';
+	static dbName = '';
 
 	static async getInstance() {
-		const profile = await chrome.identity.getProfileUserInfo();
 		if (this.dbInstance == null) {
+			const profile = await chrome.identity.getProfileUserInfo();
+			this.dbName = this.dbNamePrefix + profile.id;
+
+			console.log('Creating DB: ' + this.dbName);
 			this.dbInstance = await create({
-				id: this.dbName + profile.id,
+				id: this.dbName,
 				schema: {
-					title: 'string',
-					url: 'string',
-				  	embedding: 'vector[384]',
+					id: 'string',
+					embedding: 'vector[384]',
 				},
 			});
-			// await this.restoreVector();
+			await this.restoreVector();
 		}
 
 		return this.dbInstance;
 	}
 
 	static async saveVectorIfNeeded() {
-        if (this.dbInstance && this.shouldSave) { 
+        if (this.dbInstance) { 
 			console.log('Saving DB Instance');
-            // await persist(this.dbInstance, 'json');
-            this.shouldSave = false;
+            const dbExport = await save(this.dbInstance);
+			if (dbExport) {
+				let serialized = {};
+				serialized[this.dbName] = JSON.stringify(dbExport);
+				chrome.storage.local.set(serialized).then(() => {
+					console.log('Saved OK');
+				});
+			}
         }
-    }
-
-	static markForSave() {
-		console.log('Marking DB Instance for save');
-        this.shouldSave = true;
     }
 
 	static async restoreVector() {
         if (this.dbInstance) {
 			console.log('Restoring DB Instance');
-            // await restore('json', this.dbInstance);
+            chrome.storage.local.get(this.dbName).then((result) => {
+				if (result && Object.keys(result).includes(this.dbName)) {
+					console.log(result);
+					load(this.dbInstance, JSON.parse(result[this.dbName]));
+				}
+			});
         }
     }
 }
@@ -49,56 +58,89 @@ const getDBCount = async (dbInstance) => {
 	return await count(dbInstance);
 };
 
+const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark, dataToInsert, semaphore) => {
+	const url = bookmark.url;
+	const result = await getByID(dbInstance, url);
+
+	if (!result) {
+		let text = bookmark.title;
+
+		// try {
+		// 	const res = await fetch(url);
+		// 	const dom = cheerio.load(await res.text());
+		// 	text = dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 50);
+		// } catch (error) {
+		// 	// console.log(error);
+		// }
+
+		// if (i % 100 == 1) {
+		// 	console.log(i + ' : '  + (sum / i) + 'ms');
+		// }
+
+		const vector = await embed(pipelineInstance, text);
+		dataToInsert[url] = {	
+			id: url,
+			title: bookmark.title,
+			url: url,
+			embedding: vector
+		};
+	}
+
+	--semaphore.count;
+};
+
 const indexBookmarks = (dbInstance) => {
 	if (dbInstance) {
-
-		// set localStorage to indicate that indexing has started
-		// localStorage.setItem('indexingStarted', true);
-		chrome.storage.local.set({indexingStarted: true}, function() {
-			if(chrome.runtime.lastError) {
-			  console.error("error setting indexingStarted to true: " + chrome.runtime.lastError.message);
-			}
-		  });
-
-		
+		console.log('Indexing bookmarks')
 		chrome.bookmarks.getTree(async (tree) => {
 			const bookmarksList = dumpTreeNodes(tree[0].children);
 			const pipelineInstance = await PipelineSingleton.getInstance();
 
-			let dataToInsert = [];
-			let c = 0;
+			let dataToInsert = {};
+			let semaphore = {'count': bookmarksList.length}
+
+			chrome.storage.sync.set({ 'indexingStarted': true });
+
+			console.log('Started indexing: ' + Date.now());
 
 			for (let i = 0; i < bookmarksList.length; i++) {
-				const key = bookmarksList[i].url;
-				const vector = await embed(pipelineInstance, bookmarksList[i].title);
-				dataToInsert.push({
-					title: bookmarksList[i].title,
-					url: key,
-					embedding: vector
-				});
-				c++;
-				// chrome.storage.local.get(key).then(async (result) => {
-				// 	if (!result.key) {
-				// 		c = c + 1;
-				// 		const vector = await embed(bookmarksList[i].title);
-				// 		dataToInsert.push({
-				// 			title: bookmarksList[i].title,
-				// 			id: key,
-				// 			embedding: embed(bookmarksList[i].title)
-				// 		});
-				// 		chrome.storage.local.set({ key: key });
-				// 	}
-				// });
-			}
+				// scrapeAndVectorize(dbInstance, pipelineInstance, bookmarksList[i], dataToInsert, semaphore);
+				const bookmark = bookmarksList[i];
 
-			await insertMultiple(dbInstance, dataToInsert, 750);
-			console.log("Finished indexing: " + c);
-			// localStorage.setItem('indexingStarted', false);
-			chrome.storage.local.set({indexingStarted: false}, function() {
-				if(chrome.runtime.lastError) {
-				  console.error("error setting indexingStarted to false: " + chrome.runtime.lastError.message);
+				const url = bookmark.url;
+				const result = await getByID(dbInstance, url);
+
+				if (!result) {
+					let text = bookmark.title;
+
+					// try {
+					// 	const res = await fetch(url);
+					// 	const dom = cheerio.load(await res.text());
+					// 	text = dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 50);
+					// } catch (error) {
+					// 	// console.log(error);
+					// }
+
+					const vector = await embed(pipelineInstance, text);
+					dataToInsert[url] = {	
+						id: url,
+						title: bookmark.title,
+						url: url,
+						embedding: vector
+					};
 				}
-			  });
+			}
+			// setTimeout(() => {console.log(dataToInsert)}, 1000);
+			// while(semaphore.count > 0) {
+				// setTimeout(() => {console.log(semaphore)}, 1000);
+			// }
+
+			await insertMultiple(dbInstance, Object.values(dataToInsert), 750);
+			LocalDBSingleton.saveVectorIfNeeded();
+			console.log("Finished indexing: " + Date.now());
+
+			chrome.storage.sync.set({ 'indexingStarted': false });
+
 		});
 	}
 }

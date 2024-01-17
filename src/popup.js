@@ -1,10 +1,17 @@
-import { indexBookmarks } from "./bookutils.js";
-
 const inputElement = document.getElementById('text');
 const searchButton = document.getElementById('search-button');
 const outputElement = document.getElementById('output');
 const loader = document.getElementById('loader');
 const indexLoader = document.getElementById('index-loader');
+
+const makeBookmarkItem = (bookDoc) => {
+	const a = document.createElement('a');
+	a.href = bookDoc.url;
+	a.appendChild(document.createTextNode(bookDoc.title));
+	const d = document.createElement('div');
+	d.appendChild(a);
+	return d;
+};
 
 searchButton.addEventListener('click', () => {
 	const query = inputElement.value;
@@ -12,35 +19,30 @@ searchButton.addEventListener('click', () => {
 		return;
 
 	loader.style.display = 'block';
+	outputElement.innerText = '';
 
 	const message = {
 		action: 'search',
 		query: query,
 	}
-
 	chrome.runtime.sendMessage(message, (response) => {
 		loader.style.display = 'none';
-		outputElement.innerText = JSON.stringify(response, null, 2);
+		response.result.forEach(element => {
+			outputElement.appendChild(makeBookmarkItem(element.document));
+		});
 	});
 });
 
-// function checkIndexingStatus() {
-// 	const indexingStatus = localStorage.getItem('indexingStatus');
-// 	if (indexingStatus === 'completed') {
-// 		indexLoader.style.display = 'none';
-// 	} else if (indexingStatus === 'started') {
-// 		indexLoader.style.display = 'block';
-// 	}
-// }
-
-// setInterval(checkIndexingStatus, 1000);
-
-chrome.storage.onChanged.addListener((changes, namespace) => {
-	for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-	  console.log(
-		`Storage key "${key}" in namespace "${namespace}" changed.`,
-		`Old value was "${oldValue}", new value is "${newValue}".`
-	  );
+async function checkIndexingStatus() {
+	const storageVar = await chrome.storage.sync.get(['indexingStarted']);
+	
+	if (storageVar['indexingStarted']) {
+		indexLoader.style.display = 'flex';
+	} else {
+		indexLoader.style.display = 'none';
 	}
-  });
+}
 
+window.onload=function(){
+	setInterval(checkIndexingStatus, 1000);
+}

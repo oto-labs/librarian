@@ -54,17 +54,34 @@ body {
 #output {
 	margin-top: 10px;
 	height: max-content;
-    font-size: 20px;
-    font-family: 'Roboto Mono', monospace;
+	display: flex;
+	flex-direction: column;
+	overflow: scroll;
 }
 
-#loader {
-	border: 16px solid #f3f3f3; /* Light grey */
-	border-top: 16px solid #3498db; /* Blue */
+#output div {
+	padding: 5px 10px;
+	font-size: 16px;
+    font-family: 'Roboto Mono', monospace;
+	border-bottom: 1px #ccc dotted;
+}
+
+#index-loader {
+	display: flex;
+    width: 25%;
+    margin: 0 auto;
+}
+
+.loader {
+	float: left;
+	overflow: hidden;
+	border: 4px solid #f3f3f3; /* Light grey */
+	border-top: 4px solid #3498db; /* Blue */
 	border-radius: 50%;
-	width: 50px;
-	height: 50px;
-	margin-top: 10px;
+	width: 12px;
+	height: 12px;
+	margin-top: 0px;
+	margin-right: 10px;
 	animation: spin 2s linear infinite;
   }
   
