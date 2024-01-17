@@ -68,10 +68,11 @@ const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark) => {
 
 			const text = fetch(url).then(res => res.text()).then(res => {
 				const dom = cheerio.load(res);
-				return dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 50);
+				return dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 100);
 			}).catch(error => bookmark.title);
 
 			text.then((res) => {
+				res = res ? res : bookmark.title;
 				embed(pipelineInstance, res).then(vector => {
 					resolve({
 						id: url,
@@ -91,7 +92,7 @@ const indexBookmarks = (dbInstance) => {
 	if (dbInstance) {
 		console.log('Indexing bookmarks')
 		chrome.bookmarks.getTree(async (tree) => {
-			const bookmarksList = dumpTreeNodes(tree[0].children).slice(0, 5);
+			const bookmarksList = dumpTreeNodes(tree[0].children).slice(0, 200);
 			const pipelineInstance = await PipelineSingleton.getInstance();
 			let dataToInsert = {};
 
@@ -112,7 +113,6 @@ const indexBookmarks = (dbInstance) => {
 			console.log("Finished indexing: " + Date.now());
 
 			chrome.storage.sync.set({ 'indexingStarted': false });
-
 		});
 	}
 }
@@ -142,11 +142,12 @@ const searchBookmarks = async (dbInstance, query) => {
 	const result = await searchVector(dbInstance, {
 		vector: queryEmbed,
 		property: 'embedding',
-		similarity: 0.01,
+		similarity: 0.25,
 		includeVectors: false,
-		limit: 10,
+		limit: 20,
 		offset: 0,
 	})
+	console.log(result);
 
 	return result.hits;
 };
