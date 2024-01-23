@@ -1,5 +1,6 @@
 const inputElement = document.getElementById('text');
 const searchButton = document.getElementById('search-button');
+const clearButton = document.getElementById('clear-button');
 const outputElement = document.getElementById('output');
 const loader = document.getElementById('loader');
 const indexLoader = document.getElementById('index-loader');
@@ -19,6 +20,11 @@ const buildResultsDiv = (results) => {
 		outputElement.appendChild(makeBookmarkItem(element.document));
 	});
 };
+
+clearButton.addEventListener('click', () => {
+	inputElement.value = '';
+	outputElement.innerText = '';
+});
 
 searchButton.addEventListener('click', () => {
 	const query = inputElement.value;
@@ -42,7 +48,7 @@ searchButton.addEventListener('click', () => {
 			}});
 			buildResultsDiv(response.result);
 		} else {
-			outputElement.innerText = 'No results found';
+			outputElement.innerText = 'No results found :(';
 		}
 	});
 });

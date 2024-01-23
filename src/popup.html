@@ -4,22 +4,29 @@
 		<meta charset="UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Moirai+One&family=Open+Sans&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
 		<title>Librarian</title>
 		<link rel="stylesheet" href="./popup.css" />
 	</head>
 	<body>
 		<div class="container">
-			<h1>Librarian</h1>
-			<h2>Search Bookmarks</h2>
+			<h1 id="title">Librarian</h1>
+			<!-- <h3 id="subtitle">Search Your Bookmarks</h2> -->
 			<div style='display: none;' id="index-loader">
 				<!-- <div class="loader"></div>
 				<div style="overflow: hidden;">Indexing...</div> -->
 				<progress value="0" max="100" id="progress-bar"> </progress>
-				
 			</div>
-			<input id="text" placeholder="Enter text here">
+			<input id="text" placeholder="Search Your Bookmarks">
 			<br />
-			<button id="search-button">Search</button>
+			<div id="buttons">
+				<button id="search-button">Search</button>
+				<button id="clear-button">Clear</button>
+			</div>
 			<div style='display: none' id="loader"></div>
 			<div id="output"></div>
 		</div>
