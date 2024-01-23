@@ -98,26 +98,39 @@ const indexBookmarks = (dbInstance) => {
 			const pipelineInstance = await PipelineSingleton.getInstance();
 			let dataToInsert = {};
 
-			chrome.storage.sync.get('otoData', function(data) {
-				let updatedSettings = data.otoData || {};
-				updatedSettings.indexingStarted = true;
-				updatedSettings.bookmarksLength = bookmarksList.length;
-				updatedSettings.bookmarksCounter = bookmarksList.length;
-				chrome.storage.sync.set({ 'otoData': updatedSettings });
-			});
-			// chrome.storage.sync.set({ 'indexingStarted': true, 'bookmarksLength': bookmarksList.length});
+			// chrome.storage.sync.get('otoData', function(data) {
+			// 	let updatedSettings = data.otoData || {};
+			// 	updatedSettings.indexingStarted = true;
+			// 	updatedSettings.bookmarksLength = bookmarksList.length;
+			// 	updatedSettings.bookmarksCounter = 0;
+			// 	chrome.storage.sync.set({ 'otoData': updatedSettings });
+			// });
+
+			chrome.storage.sync.set({ 'otoIndexingStarted': true, 'otoBookmarksLength': bookmarksList.length, 'otoBookmarksCounter': 0});
 
 			console.log('Started indexing: ' + Date.now());
-			const embeddedDate = await Promise.all(bookmarksList.map(async (bookmark, index) => {
-				console.log("Indexing: " + bookmark.url);
-				chrome.storage.sync.get('otoData', function(data) {
-					let updatedSettings = data.otoData || {};
-					updatedSettings.bookmarksCounter--;
-					console.log("decrementing",updatedSettings)
-					chrome.storage.sync.set({ 'otoData': updatedSettings });
-				});
+			// const embeddedDate = await Promise.all(bookmarksList.map(async (bookmark, index) => {
+			// 	chrome.storage.sync.get('otoData', function(data) {
+			// 		let updatedSettings = data.otoData || {};
+			// 		updatedSettings.bookmarksCounter++;
+			// 		chrome.storage.sync.set({ 'otoData': updatedSettings });
+			// 	});
 
-				return scrapeAndVectorize(dbInstance, pipelineInstance, bookmark);
+			// 	return scrapeAndVectorize(dbInstance, pipelineInstance, bookmark);
+			// }));
+
+			const embeddedDate = await Promise.all(bookmarksList.map(async (bookmark, index) => {
+				await scrapeAndVectorize(dbInstance, pipelineInstance, bookmark);
+				return new Promise((resolve, reject) => {
+					if (index % 10 == 0 || index == bookmarksList.length - 1) {
+						// chrome.storage.sync.get('otoData', function(data) {
+						// 	let updatedSettings = data.otoData || {};
+						// 	updatedSettings.bookmarksCounter++;
+						// 	chrome.storage.sync.set({ 'otoData': updatedSettings });
+						// });
+						chrome.storage.sync.set({ 'otoBookmarksCounter': index + 1});
+					}
+				});
 			}));
 
 			console.log(embeddedDate);
@@ -131,11 +144,12 @@ const indexBookmarks = (dbInstance) => {
 			console.log("Finished indexing: " + Date.now());
 
 			// chrome.storage.sync.set({ 'indexingStarted': false });
-			chrome.storage.sync.get('otoData', function(data) {
-				let updatedSettings = data.otoData || {};
-				updatedSettings.indexingStarted = false;
-				chrome.storage.sync.set({ 'otoData': updatedSettings });
-			});
+			// chrome.storage.sync.get('otoData', function(data) {
+			// 	let updatedSettings = data.otoData || {};
+			// 	updatedSettings.indexingStarted = false;
+			// 	chrome.storage.sync.set({ 'otoData': updatedSettings });
+			// });
+			chrome.storage.sync.set({ 'otoIndexingStarted': false });
 		});
 	}
 }

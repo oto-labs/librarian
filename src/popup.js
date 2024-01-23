@@ -73,15 +73,18 @@ const reopenResults = (expirationTimeInMinutes = 5) => {
 };
 
 async function checkIndexingStatus() {
-	const otoData = await chrome.storage.sync.get(['otoData']);
+	const otoData = await chrome.storage.sync.get(['otoIndexingStarted', 'otoBookmarksLength', 'otoBookmarksCounter']);
 
-	const indexingStarted = otoData['otoData']['indexingStarted'];
-	const bookmarksLength = otoData['otoData']['bookmarksLength'];
-	const bookmarksCounter = otoData['otoData']['bookmarksCounter'];
-
-	if (indexingStarted && (bookmarksCounter > 0)) {
+	// const indexingStarted = otoData['otoData']['indexingStarted'];
+	// const bookmarksLength = otoData['otoData']['bookmarksLength'];
+	// const bookmarksCounter = otoData['otoData']['bookmarksCounter'];
+	const indexingStarted = otoData['otoIndexingStarted'];
+	const bookmarksLength = otoData['otoBookmarksLength'];
+	const bookmarksCounter = otoData['otoBookmarksCounter'];
+	console.log(indexingStarted, bookmarksLength, "checkIndexingStatus", bookmarksCounter)
+	if (indexingStarted && (bookmarksCounter < bookmarksLength)) {
 		indexLoader.style.display = 'flex';
-		progressBar.value = bookmarksIndexProgress ? bookmarksIndexProgress : 0;
+		progressBar.value = bookmarksCounter ? bookmarksCounter : 0;
 		progressBar.max = bookmarksLength ? bookmarksLength : 100;
 
 	} else {
