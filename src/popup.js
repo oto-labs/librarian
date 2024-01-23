@@ -14,6 +14,12 @@ const makeBookmarkItem = (bookDoc) => {
 	return d;
 };
 
+const buildResultsDiv = (results) => {
+	results.forEach((element) => {
+		outputElement.appendChild(makeBookmarkItem(element.document));
+	});
+};
+
 searchButton.addEventListener('click', () => {
 	const query = inputElement.value;
 	if (!query)
@@ -29,14 +35,36 @@ searchButton.addEventListener('click', () => {
 	chrome.runtime.sendMessage(message, (response) => {
 		loader.style.display = 'none';
 		if (response.result.length > 0) {
-			response.result.forEach((element) => {
-				outputElement.appendChild(makeBookmarkItem(element.document));
-			});
+			chrome.storage.sync.set({'librarian-saved-results': {
+				'saveTime': Date.now(),
+				'results': response.result,
+				'query': query
+			}});
+			buildResultsDiv(response.result);
 		} else {
 			outputElement.innerText = 'No results found';
 		}
 	});
 });
+
+const reopenResults = (expirationTimeInMinutes = 5) => {
+	/*
+	pastResults = {
+		'saveTime': ...,
+		'results': [...],
+		'query': '...'
+	}
+	*/
+	chrome.storage.sync.get('librarian-saved-results').then((pastResults) => {
+		pastResults = pastResults['librarian-saved-results'];
+		if (pastResults) {
+			if (Date.now() < pastResults.saveTime + (expirationTimeInMinutes * 60 * 1000)) {
+				inputElement.value = pastResults.query;
+				buildResultsDiv(pastResults.results);
+			}
+		}
+	});
+};
 
 async function checkIndexingStatus() {
 	const storageVar = await chrome.storage.sync.get(['indexingStarted', 'bookmarksLength', 'bookmarksIndexProgress']);
@@ -53,9 +81,10 @@ async function checkIndexingStatus() {
 	} else {
 		indexLoader.style.display = 'none';
 	}
-}
+};
 
-window.onload=function(){
+window.onload = function() {
+	reopenResults();
 	checkIndexingStatus();
 	setInterval(checkIndexingStatus, 1000);
 }
