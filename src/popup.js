@@ -39,13 +39,13 @@ searchButton.addEventListener('click', () => {
 });
 
 async function checkIndexingStatus() {
-	const storageVar = await chrome.storage.sync.get(['indexingStarted', 'bookmarksLength', 'bookmarksIndexProgress']);
+	const otoData = await chrome.storage.sync.get(['otoData']);
 
-	const indexingStarted = storageVar['indexingStarted'];
-	const bookmarksLength = storageVar['bookmarksLength'];
-	const bookmarksIndexProgress = storageVar['bookmarksIndexProgress'];
+	const indexingStarted = otoData['otoData']['indexingStarted'];
+	const bookmarksLength = otoData['otoData']['bookmarksLength'];
+	const bookmarksCounter = otoData['otoData']['bookmarksCounter'];
 
-	if (indexingStarted && bookmarksLength > bookmarksIndexProgress) {
+	if (indexingStarted && (bookmarksCounter > 0)) {
 		indexLoader.style.display = 'flex';
 		progressBar.value = bookmarksIndexProgress ? bookmarksIndexProgress : 0;
 		progressBar.max = bookmarksLength ? bookmarksLength : 100;

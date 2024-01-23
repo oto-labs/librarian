@@ -82,6 +82,8 @@ const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark) => {
 					});
 				}).catch(error => resolve({}));
 			}).catch(error => resolve({}));
+
+			//countdown here
 		}).catch(error => {
 			resolve({});
 		});
@@ -96,12 +98,28 @@ const indexBookmarks = (dbInstance) => {
 			const pipelineInstance = await PipelineSingleton.getInstance();
 			let dataToInsert = {};
 
-			chrome.storage.sync.set({ 'indexingStarted': true, 'bookmarksLength': bookmarksList.length});
+			chrome.storage.sync.get('otoData', function(data) {
+				let updatedSettings = data.otoData || {};
+				updatedSettings.indexingStarted = true;
+				updatedSettings.bookmarksLength = bookmarksList.length;
+				updatedSettings.bookmarksCounter = bookmarksList.length;
+				chrome.storage.sync.set({ 'otoData': updatedSettings });
+			});
+			// chrome.storage.sync.set({ 'indexingStarted': true, 'bookmarksLength': bookmarksList.length});
 
 			console.log('Started indexing: ' + Date.now());
-			const embeddedDate = await Promise.all(bookmarksList.map((bookmark) => {
+			const embeddedDate = await Promise.all(bookmarksList.map(async (bookmark, index) => {
+				console.log("Indexing: " + bookmark.url);
+				chrome.storage.sync.get('otoData', function(data) {
+					let updatedSettings = data.otoData || {};
+					updatedSettings.bookmarksCounter--;
+					console.log("decrementing",updatedSettings)
+					chrome.storage.sync.set({ 'otoData': updatedSettings });
+				});
+
 				return scrapeAndVectorize(dbInstance, pipelineInstance, bookmark);
 			}));
+
 			console.log(embeddedDate);
 			embeddedDate.forEach((result) => {
 				if (result)
@@ -112,7 +130,12 @@ const indexBookmarks = (dbInstance) => {
 			LocalDBSingleton.saveVectorIfNeeded();
 			console.log("Finished indexing: " + Date.now());
 
-			chrome.storage.sync.set({ 'indexingStarted': false });
+			// chrome.storage.sync.set({ 'indexingStarted': false });
+			chrome.storage.sync.get('otoData', function(data) {
+				let updatedSettings = data.otoData || {};
+				updatedSettings.indexingStarted = false;
+				chrome.storage.sync.set({ 'otoData': updatedSettings });
+			});
 		});
 	}
 }
