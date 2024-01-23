@@ -1,5 +1,6 @@
 const inputElement = document.getElementById('text');
 const searchButton = document.getElementById('search-button');
+const clearButton = document.getElementById('clear-button');
 const outputElement = document.getElementById('output');
 const loader = document.getElementById('loader');
 const indexLoader = document.getElementById('index-loader');
@@ -13,6 +14,17 @@ const makeBookmarkItem = (bookDoc) => {
 	d.appendChild(a);
 	return d;
 };
+
+const buildResultsDiv = (results) => {
+	results.forEach((element) => {
+		outputElement.appendChild(makeBookmarkItem(element.document));
+	});
+};
+
+clearButton.addEventListener('click', () => {
+	inputElement.value = '';
+	outputElement.innerText = '';
+});
 
 searchButton.addEventListener('click', () => {
 	const query = inputElement.value;
@@ -29,14 +41,36 @@ searchButton.addEventListener('click', () => {
 	chrome.runtime.sendMessage(message, (response) => {
 		loader.style.display = 'none';
 		if (response.result.length > 0) {
-			response.result.forEach((element) => {
-				outputElement.appendChild(makeBookmarkItem(element.document));
-			});
+			chrome.storage.sync.set({'librarian-saved-results': {
+				'saveTime': Date.now(),
+				'results': response.result,
+				'query': query
+			}});
+			buildResultsDiv(response.result);
 		} else {
-			outputElement.innerText = 'No results found';
+			outputElement.innerText = 'No results found :(';
 		}
 	});
 });
+
+const reopenResults = (expirationTimeInMinutes = 5) => {
+	/*
+	pastResults = {
+		'saveTime': ...,
+		'results': [...],
+		'query': '...'
+	}
+	*/
+	chrome.storage.sync.get('librarian-saved-results').then((pastResults) => {
+		pastResults = pastResults['librarian-saved-results'];
+		if (pastResults) {
+			if (Date.now() < pastResults.saveTime + (expirationTimeInMinutes * 60 * 1000)) {
+				inputElement.value = pastResults.query;
+				buildResultsDiv(pastResults.results);
+			}
+		}
+	});
+};
 
 async function checkIndexingStatus() {
 	const otoData = await chrome.storage.sync.get(['otoData']);
@@ -53,9 +87,10 @@ async function checkIndexingStatus() {
 	} else {
 		indexLoader.style.display = 'none';
 	}
-}
+};
 
-window.onload=function(){
+window.onload = function() {
+	reopenResults();
 	checkIndexingStatus();
 	setInterval(checkIndexingStatus, 1000);
 }

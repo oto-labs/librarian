@@ -7,19 +7,6 @@
     font-family: 'Roboto', sans-serif;
 }
 
-h1 {
-    font-size: 40px;
-    text-align: center;
-    font-weight: 500;
-}
-
-h2 {
-    font-size: 20px;
-    text-align: center;
-    font-weight: 400;
-    margin-bottom: 16px;
-}
-
 html,
 body {
     min-width: 400px;
@@ -31,38 +18,78 @@ body {
     justify-content: center;
 }
 
+#title {
+    font-size: 40px;
+    text-align: center;
+    font-weight: 500;
+	font-family: 'Moirai One', system-ui;
+}
+
+#subtitle {
+    text-align: center;
+    font-weight: 200;
+    margin-bottom: 16px;
+	font-family: 'Montserrat', sans-serif;
+}
+
 .container {
     width: 360px;
-	margin-top: 50px;
+	margin-top: 20px;
 }
 
 #text {
     width: 100%;
     padding: 8px;
     font-size: 20px;
-	margin-top: 5px;
+	margin-top: 15px;
     margin-bottom: 8px;
 }
 
-#search-button {
+#text:focus {
+	outline: none;
+}
+
+#buttons {
 	width: 100%;
+	display: flex;
+	flex-direction: row;
+	border-radius: 5px;
+	font-family: 'Montserrat', sans-serif;
+}
+
+#search-button {
+	width: 75%;
 	padding: 5px 0px;
 	border: 1px #ccc;
 	border-radius: 5px;
-};
+	background-color: #333;
+	color: #fff;
+}
+
+#clear-button {
+	width: 25%;
+	padding: 5px 0px;
+	border: 1px #ccc;
+	border-radius: 5px;
+	margin-left: 5px;
+	background-color: #ff4f4b;
+	color: #fff;
+}
 
 #output {
-	margin-top: 10px;
+	margin-top: 15px;
 	height: max-content;
 	display: flex;
 	flex-direction: column;
 	overflow: scroll;
+	font-size: 16px;
+    font-family: 'Montserrat', sans-serif;
 }
 
 #output div {
 	padding: 5px 10px;
 	font-size: 16px;
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Montserrat', sans-serif;
 	border-bottom: 1px #ccc dotted;
 }
 
