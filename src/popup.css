@@ -33,8 +33,11 @@ body {
 }
 
 .container {
+	display: flex;
+	flex-direction: column;
     width: 360px;
 	margin-top: 20px;
+	align-items: center;
 }
 
 #text {
@@ -42,7 +45,6 @@ body {
     padding: 8px;
     font-size: 20px;
 	margin-top: 15px;
-    margin-bottom: 8px;
 }
 
 #text:focus {
@@ -95,8 +97,8 @@ body {
 
 #index-loader {
 	display: flex;
-    width: 25%;
-    margin: 0 auto;
+	flex-direction: column;
+    margin-top: 5px;
 }
 
 .loader {

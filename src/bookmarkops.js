@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { create, count, insertMultiple, searchVector, getByID, save, load } from '@orama/orama';
-import { PipelineSingleton, embed } from './llm.js';
+import { PipelineSingleton, embed } from './modeling.js';
 
 class LocalDBSingleton {
 	static dbNamePrefix = 'librarian-vector-db-'
@@ -68,7 +68,7 @@ const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark) => {
 
 			const text = fetch(url).then(res => res.text()).then(res => {
 				const dom = cheerio.load(res);
-				return dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 100);
+				return dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 50);
 			}).catch(error => bookmark.title);
 
 			text.then((res) => {
@@ -94,16 +94,26 @@ const indexBookmarks = (dbInstance) => {
 		chrome.bookmarks.getTree(async (tree) => {
 			const bookmarksList = dumpTreeNodes(tree[0].children).slice(0, 200);
 			const pipelineInstance = await PipelineSingleton.getInstance();
+			let progress = 0;
 			let dataToInsert = {};
 
-			chrome.storage.sync.set({ 'indexingStarted': true, 'bookmarksLength': bookmarksList.length});
+			chrome.storage.sync.set({
+				'librarian-ops-indexingInProgress': true, 
+				'librarian-ops-bookmarksLength': bookmarksList.length,
+				'librarian-ops-bookmarksCounter': 0
+			});
 
 			console.log('Started indexing: ' + Date.now());
-			const embeddedDate = await Promise.all(bookmarksList.map((bookmark) => {
-				return scrapeAndVectorize(dbInstance, pipelineInstance, bookmark);
+			const embeddedData = await Promise.all(bookmarksList.map(bookmark => {
+				return scrapeAndVectorize(dbInstance, pipelineInstance, bookmark).then(result => {
+					progress++;
+					if (progress % 10 == 0 || progress == bookmarksList.length - 1)
+						chrome.storage.sync.set({ 'librarian-ops-bookmarksCounter': progress});
+					return result;
+				});
 			}));
-			console.log(embeddedDate);
-			embeddedDate.forEach((result) => {
+
+			embeddedData.forEach((result) => {
 				if (result)
 					dataToInsert[result.url] = result;
 			});
@@ -112,7 +122,7 @@ const indexBookmarks = (dbInstance) => {
 			LocalDBSingleton.saveVectorIfNeeded();
 			console.log("Finished indexing: " + Date.now());
 
-			chrome.storage.sync.set({ 'indexingStarted': false });
+			chrome.storage.sync.set({ 'librarian-ops-indexingInProgress': false });
 		});
 	}
 }

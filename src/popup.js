@@ -73,17 +73,22 @@ const reopenResults = (expirationTimeInMinutes = 5) => {
 };
 
 async function checkIndexingStatus() {
-	const storageVar = await chrome.storage.sync.get(['indexingStarted', 'bookmarksLength', 'bookmarksIndexProgress']);
+	const storageVar = await chrome.storage.sync.get([
+		'librarian-ops-indexingInProgress',
+		'librarian-ops-bookmarksLength',
+		'librarian-ops-bookmarksCounter'
+	]);
 
-	const indexingStarted = storageVar['indexingStarted'];
-	const bookmarksLength = storageVar['bookmarksLength'];
-	const bookmarksIndexProgress = storageVar['bookmarksIndexProgress'];
+	const indexingInProgress = storageVar['librarian-ops-indexingInProgress'];
+	const bookmarksLength = storageVar['librarian-ops-bookmarksLength'];
+	const bookmarksIndexProgress = storageVar['librarian-ops-bookmarksCounter'];
 
-	if (indexingStarted && bookmarksLength > bookmarksIndexProgress) {
+	console.log(indexingInProgress, bookmarksIndexProgress);
+
+	if (indexingInProgress) {
 		indexLoader.style.display = 'flex';
 		progressBar.value = bookmarksIndexProgress ? bookmarksIndexProgress : 0;
 		progressBar.max = bookmarksLength ? bookmarksLength : 100;
-
 	} else {
 		indexLoader.style.display = 'none';
 	}
@@ -92,5 +97,5 @@ async function checkIndexingStatus() {
 window.onload = function() {
 	reopenResults();
 	checkIndexingStatus();
-	setInterval(checkIndexingStatus, 1000);
+	setInterval(checkIndexingStatus, 2000);
 }
