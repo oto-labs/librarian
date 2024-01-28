@@ -57,10 +57,24 @@ const getDBCount = async (dbInstance) => {
 	return await count(dbInstance);
 };
 
+// Subselect text from page to embed
+// TODO: make this smarter, parse out HTML
+const subselectText = (dom, n_paras=3) => {
+	const strippedText = dom('div').text().trim().replace(/\n\s*\n/g, '\n');
+	// Filter paragraphs smaller than 50 characters; filter duplicate paras
+	let salientParagraphs = new Set(strippedText.split('\n').filter(text => text.length >= 50));
+	// Get n_paras biggest paragraphs
+	salientParagraphs = Array.from(salientParagraphs).toSorted((a, b) => b.length - a.length);
+	const selectedText = salientParagraphs.slice(0, n_paras).join('\n');
+	return selectedText;
+};
+
+// TODO: too slow right now, make this go brrr
 const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark) => {
 	return new Promise(resolve => {
 		const url = bookmark.url;
 		getByID(dbInstance, url).then((result) => {
+			// URL's already been indexed, do nothing
 			if (result) {
 				resolve({});
 				return;
@@ -68,7 +82,7 @@ const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark) => {
 
 			const text = fetch(url).then(res => res.text()).then(res => {
 				const dom = cheerio.load(res);
-				return dom('div').text().trim().replace(/\n\s*\n/g, '\n').substring(0, 50);
+				return subselectText(dom);
 			}).catch(error => bookmark.title);
 
 			text.then((res) => {
@@ -104,7 +118,8 @@ const indexBookmarks = (dbInstance) => {
 			});
 
 			console.log('Started indexing: ' + Date.now());
-			const embeddedData = await Promise.all(bookmarksList.map(bookmark => {
+			const embeddedData = await Promise.all(bookmarksList.map(async (bookmark) => {
+				// TODO: fix/improve progress, this is directionally right but doesnt indicate completion right
 				return scrapeAndVectorize(dbInstance, pipelineInstance, bookmark).then(result => {
 					progress++;
 					if (progress % 10 == 0 || progress == bookmarksList.length - 1)

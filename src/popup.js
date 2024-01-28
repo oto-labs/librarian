@@ -83,8 +83,6 @@ async function checkIndexingStatus() {
 	const bookmarksLength = storageVar['librarian-ops-bookmarksLength'];
 	const bookmarksIndexProgress = storageVar['librarian-ops-bookmarksCounter'];
 
-	console.log(indexingInProgress, bookmarksIndexProgress);
-
 	if (indexingInProgress) {
 		indexLoader.style.display = 'flex';
 		progressBar.value = bookmarksIndexProgress ? bookmarksIndexProgress : 0;
