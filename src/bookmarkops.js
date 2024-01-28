@@ -168,11 +168,12 @@ const searchBookmarks = async (dbInstance, query) => {
 	const result = await searchVector(dbInstance, {
 		vector: queryEmbed,
 		property: 'embedding',
-		similarity: 0.25,
+		similarity: 0.3,
 		includeVectors: false,
 		limit: 20,
 		offset: 0,
 	})
+
 	console.log(result);
 
 	return result.hits;
