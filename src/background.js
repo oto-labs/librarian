@@ -1,4 +1,4 @@
-import { getDBCount, indexBookmarks, searchBookmarks, LocalDBSingleton } from './bookutils.js';
+import { getDBCount, indexBookmarks, searchBookmarks, LocalDBSingleton } from './bookmarkops.js';
 
 ////////////////////// Init //////////////////////
 chrome.runtime.onInstalled.addListener(async function () {
@@ -6,7 +6,7 @@ chrome.runtime.onInstalled.addListener(async function () {
 	indexBookmarks(dbInstance);
 
 	chrome.alarms.create('librarian-indexer', {
-		periodInMinutes: 1
+		periodInMinutes: 300
 	});
 });
 
