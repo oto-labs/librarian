@@ -106,7 +106,8 @@ const indexBookmarks = (dbInstance) => {
 	if (dbInstance) {
 		console.log('Indexing bookmarks')
 		chrome.bookmarks.getTree(async (tree) => {
-			const bookmarksList = dumpTreeNodes(tree[0].children).slice(0, 200);
+			// for testing: .slice(0, 200);
+			const bookmarksList = dumpTreeNodes(tree[0].children);
 			const pipelineInstance = await PipelineSingleton.getInstance();
 			let progress = 0;
 			let dataToInsert = {};
