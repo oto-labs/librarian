@@ -11,7 +11,7 @@ Chrome extension to search your bookmarks' content right in your browser. Privat
 ➤ Vector search (with [orama](https://oramasearch.com/)).
 
 WIP. Stay tuned for enhancements and fixes:
-- [ ] Make scraping faster
-- [ ] Better salient text subselection
-- [ ] Make Progress Bar more accurate
+- [ ] Accurate progress bar
+- [ ] Faster scraping
+- [ ] Smarter salient text subselection
 - [ ] Better UI/UX
