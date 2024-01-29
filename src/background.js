@@ -6,7 +6,7 @@ chrome.runtime.onInstalled.addListener(async function () {
 	indexBookmarks(dbInstance);
 
 	chrome.alarms.create('librarian-indexer', {
-		periodInMinutes: 300
+		periodInMinutes: 60
 	});
 });
 
