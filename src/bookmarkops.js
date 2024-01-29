@@ -104,7 +104,6 @@ const scrapeAndVectorize = async (dbInstance, pipelineInstance, bookmark) => {
 
 const indexBookmarks = (dbInstance) => {
 	if (dbInstance) {
-		console.log('Indexing bookmarks')
 		chrome.bookmarks.getTree(async (tree) => {
 			// for testing: .slice(0, 200);
 			const bookmarksList = dumpTreeNodes(tree[0].children);
@@ -173,8 +172,6 @@ const searchBookmarks = async (dbInstance, query) => {
 		limit: 20,
 		offset: 0,
 	})
-
-	console.log(result);
 
 	return result.hits;
 };
